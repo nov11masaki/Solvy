@@ -395,50 +395,7 @@ section h2 {
     font-size: 1.1rem;
 }
 
-.progress-container {
-    margin-bottom: 35px;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 10px;
-    background: var(--border-color);
-    border-radius: 5px;
-    overflow: hidden;
-    margin-bottom: 12px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
-}
-
-.progress-fill::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: progressShimmer 1.5s infinite;
-}
-
-@keyframes progressShimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.progress-text {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    font-weight: 600;
-}
+/* 旧いステップナビゲーションのスタイルは削除 */
 
 .guidance-card {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), rgba(236, 72, 153, 0.03));
@@ -452,6 +409,176 @@ section h2 {
 .guidance-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* 問題表示 */
+.problem-display {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(147, 51, 234, 0.1));
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 2px solid rgba(99, 102, 241, 0.2);
+}
+
+.problem-display h3 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.problem-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+}
+
+/* 解答入力セクション */
+.answer-input-section {
+    margin-bottom: 30px;
+}
+
+.answer-input-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.learner-work-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, monospace;
+    line-height: 1.6;
+    resize: vertical;
+    transition: all 0.3s ease;
+    background: white;
+    margin-bottom: 15px;
+}
+
+.learner-work-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.learner-work-textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+/* AIガイダンスセクション */
+.ai-guidance-section {
+    margin-top: 30px;
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ai-guidance-section h3 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: var(--secondary-color);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.learner-intent-section,
+.evaluation-section,
+.hint-section,
+.encouragement-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.learner-intent-section {
+    border-left-color: #8b5cf6;
+    background: linear-gradient(to right, rgba(139, 92, 246, 0.05), white);
+}
+
+.evaluation-section {
+    border-left-color: #10b981;
+    background: linear-gradient(to right, rgba(16, 185, 129, 0.05), white);
+}
+
+.hint-section {
+    border-left-color: #f59e0b;
+    background: linear-gradient(to right, rgba(245, 158, 11, 0.05), white);
+}
+
+.encouragement-section {
+    border-left-color: #ec4899;
+    background: linear-gradient(to right, rgba(236, 72, 153, 0.05), white);
+}
+
+.learner-intent-section:hover,
+.evaluation-section:hover,
+.hint-section:hover,
+.encouragement-section:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.learner-intent-section h4,
+.evaluation-section h4,
+.hint-section h4,
+.encouragement-section h4 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.learner-intent-section h4 {
+    color: #8b5cf6;
+}
+
+.evaluation-section h4 {
+    color: #10b981;
+}
+
+.hint-section h4 {
+    color: #f59e0b;
+}
+
+.encouragement-section h4 {
+    color: #ec4899;
+}
+
+.guidance-text {
+    color: var(--text-primary);
+    line-height: 1.8;
+    font-size: 1.05rem;
+}
+
+/* 操作ボタン */
+.action-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
 }
 
 .hint-section,
@@ -496,12 +623,6 @@ section h2 {
     background: rgba(99, 102, 241, 0.05);
     border-radius: 8px;
     border-left: 3px solid var(--accent-color);
-}
-
-.navigation-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
 }
 
 /* ローディング */

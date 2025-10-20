@@ -2,8 +2,7 @@
 const state = {
     imageData: null,
     currentProblemId: null,
-    currentStep: 0,
-    totalSteps: 0
+    problemText: ''
 };
 
 // DOM要素の取得
@@ -22,16 +21,16 @@ const elements = {
     confidenceText: document.getElementById('confidenceText'),
     guidancePlaceholder: document.getElementById('guidancePlaceholder'),
     guidanceContent: document.getElementById('guidanceContent'),
-    progressFill: document.getElementById('progressFill'),
-    currentStep: document.getElementById('currentStep'),
-    totalSteps: document.getElementById('totalSteps'),
-    hintText: document.getElementById('hintText'),
-    explanationText: document.getElementById('explanationText'),
-    formulaSection: document.getElementById('formulaSection'),
-    formulaText: document.getElementById('formulaText'),
-    nextStepText: document.getElementById('nextStepText'),
-    prevStepBtn: document.getElementById('prevStepBtn'),
-    nextStepBtn: document.getElementById('nextStepBtn'),
+    problemText: document.getElementById('problemText'),
+    learnerWorkInput: document.getElementById('learnerWorkInput'),
+    getGuidanceBtn: document.getElementById('getGuidanceBtn'),
+    aiGuidanceSection: document.getElementById('aiGuidanceSection'),
+    learnerIntentText: document.getElementById('learnerIntentText'),
+    evaluationText: document.getElementById('evaluationText'),
+    nextHintText: document.getElementById('nextHintText'),
+    encouragementText: document.getElementById('encouragementText'),
+    clearWorkBtn: document.getElementById('clearWorkBtn'),
+    resetProblemBtn: document.getElementById('resetProblemBtn'),
     loadingOverlay: document.getElementById('loadingOverlay'),
     errorAlert: document.getElementById('errorAlert'),
     errorMessage: document.getElementById('errorMessage'),
@@ -58,9 +57,14 @@ function initEventListeners() {
     // 解析ボタン
     elements.analyzeBtn.addEventListener('click', analyzeImage);
 
-    // ナビゲーションボタン
-    elements.prevStepBtn.addEventListener('click', previousStep);
-    elements.nextStepBtn.addEventListener('click', nextStep);
+    // ガイダンス取得ボタン
+    elements.getGuidanceBtn.addEventListener('click', getGuidance);
+
+    // 解答クリアボタン
+    elements.clearWorkBtn.addEventListener('click', clearWork);
+
+    // 問題リセットボタン
+    elements.resetProblemBtn.addEventListener('click', resetProblem);
 
     // エラーアラート閉じる
     elements.closeErrorBtn.addEventListener('click', hideError);
@@ -145,7 +149,18 @@ async function analyzeImage() {
         if (result.success) {
             displayAnalysisResult(result.data);
             state.currentProblemId = result.data.matchedProblemId;
-            await loadGuidance(0);
+            state.problemText = result.data.recognizedText;
+            
+            // 問題文を表示
+            elements.problemText.textContent = state.problemText;
+            
+            // ガイダンスセクションを表示
+            elements.guidancePlaceholder.style.display = 'none';
+            elements.guidanceContent.style.display = 'block';
+            
+            // 解答入力欄をクリアしてフォーカス
+            elements.learnerWorkInput.value = '';
+            elements.learnerWorkInput.focus();
         } else {
             showError(result.error || '解析に失敗しました');
         }
@@ -169,9 +184,19 @@ function displayAnalysisResult(data) {
     elements.analysisResult.style.display = 'block';
 }
 
-// ガイダンス読み込み
-async function loadGuidance(step) {
-    if (!state.currentProblemId) return;
+// AIガイダンスを取得
+async function getGuidance() {
+    const learnerWork = elements.learnerWorkInput.value.trim();
+    
+    if (!learnerWork) {
+        showError('解答の途中経過を入力してください');
+        return;
+    }
+    
+    if (!state.currentProblemId) {
+        showError('問題が選択されていません');
+        return;
+    }
     
     showLoading();
     
@@ -183,14 +208,15 @@ async function loadGuidance(step) {
             },
             body: JSON.stringify({
                 problemId: state.currentProblemId,
-                currentStep: step
+                learnerWork: learnerWork,
+                currentStep: 0
             })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            displayGuidance(result.data);
+            displayAIGuidance(result.data);
         } else {
             showError(result.error || 'ガイダンスの取得に失敗しました');
         }
@@ -202,51 +228,45 @@ async function loadGuidance(step) {
     }
 }
 
-// ガイダンス表示
-function displayGuidance(data) {
-    state.currentStep = data.currentStep - 1;
-    state.totalSteps = data.totalSteps;
+// AIガイダンスを表示
+function displayAIGuidance(data) {
+    elements.learnerIntentText.textContent = data.learner_intent || '分析中...';
+    elements.evaluationText.textContent = data.evaluation || '';
+    elements.nextHintText.textContent = data.next_hint || '';
+    elements.encouragementText.textContent = data.encouragement || '';
     
-    // プレースホルダー非表示、コンテンツ表示
-    elements.guidancePlaceholder.style.display = 'none';
-    elements.guidanceContent.style.display = 'block';
+    // AIガイダンスセクションを表示
+    elements.aiGuidanceSection.style.display = 'block';
     
-    // 進捗バー更新
-    const progress = (data.currentStep / data.totalSteps) * 100;
-    elements.progressFill.style.width = progress + '%';
-    elements.currentStep.textContent = data.currentStep;
-    elements.totalSteps.textContent = data.totalSteps;
-    
-    // コンテンツ更新
-    elements.hintText.textContent = data.hint;
-    elements.explanationText.textContent = data.explanation;
-    
-    if (data.formula) {
-        elements.formulaSection.style.display = 'block';
-        elements.formulaText.textContent = data.formula;
-    } else {
-        elements.formulaSection.style.display = 'none';
-    }
-    
-    elements.nextStepText.textContent = data.nextStepPreparation;
-    
-    // ボタンの状態更新
-    elements.prevStepBtn.disabled = state.currentStep === 0;
-    elements.nextStepBtn.disabled = state.currentStep >= state.totalSteps - 1;
+    // スクロールしてガイダンスを見やすく
+    elements.aiGuidanceSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// 前のステップ
-function previousStep() {
-    if (state.currentStep > 0) {
-        loadGuidance(state.currentStep - 1);
-    }
+// 解答をクリア
+function clearWork() {
+    elements.learnerWorkInput.value = '';
+    elements.aiGuidanceSection.style.display = 'none';
+    elements.learnerWorkInput.focus();
 }
 
-// 次のステップ
-function nextStep() {
-    if (state.currentStep < state.totalSteps - 1) {
-        loadGuidance(state.currentStep + 1);
-    }
+// 問題をリセット
+function resetProblem() {
+    // 状態をクリア
+    state.currentProblemId = null;
+    state.problemText = '';
+    
+    // 解答入力欄とガイダンスをクリア
+    elements.learnerWorkInput.value = '';
+    elements.aiGuidanceSection.style.display = 'none';
+    
+    // ガイダンスコンテンツを非表示
+    elements.guidanceContent.style.display = 'none';
+    elements.guidancePlaceholder.style.display = 'block';
+    
+    // 画像もクリア
+    removeImage();
+    
+    showError('新しい問題を解析してください');
 }
 
 // ローディング表示

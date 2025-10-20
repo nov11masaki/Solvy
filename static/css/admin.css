@@ -28,6 +28,58 @@
     animation-delay: 0.1s;
 }
 
+/* タブ切り替え */
+.input-method-tabs {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 20px;
+    background: var(--bg-color);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-color: transparent;
+}
+
+.tab-btn:hover:not(.active) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* 入力パネル */
+.input-panel {
+    display: none;
+}
+
+.input-panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .form-group {
     margin-bottom: 25px;
 }
@@ -94,6 +146,70 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
     line-height: 1.6;
+}
+
+.info-box {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(99, 102, 241, 0.1));
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid var(--accent-color);
+    margin: 25px 0;
+}
+
+.info-box h4 {
+    color: var(--accent-color);
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+}
+
+.info-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-box li {
+    padding: 8px 0;
+    color: var(--text-secondary);
+    padding-left: 25px;
+    position: relative;
+}
+
+.info-box li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+/* 問題画像アップロード */
+#problemUploadArea {
+    margin-bottom: 15px;
+}
+
+#problemUploadArea .upload-area {
+    border: 3px dashed var(--border-color);
+    border-radius: 16px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), rgba(236, 72, 153, 0.03));
+}
+
+#problemUploadArea .upload-area:hover {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(236, 72, 153, 0.08));
+    transform: scale(1.02);
+}
+
+#problemPreviewImage {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .ai-section {

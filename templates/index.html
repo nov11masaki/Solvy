@@ -60,53 +60,68 @@
                 </div>
             </section>
 
-            <!-- 右側: ガイダンスエリア -->
+            <!-- 右側: 解答入力エリア -->
             <section class="guidance-section">
-                <h2>🎓 解答ガイダンス</h2>
+                <h2>✏️ あなたの解答</h2>
                 <div class="guidance-placeholder" id="guidancePlaceholder">
                     <p>まず問題画像をアップロードして解析してください</p>
                 </div>
                 
                 <div class="guidance-content" id="guidanceContent" style="display: none;">
-                    <!-- 進捗バー -->
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressFill"></div>
-                        </div>
-                        <p class="progress-text">
-                            ステップ <span id="currentStep">1</span> / <span id="totalSteps">4</span>
-                        </p>
+                    <!-- 問題文表示 -->
+                    <div class="problem-display">
+                        <h3>📝 問題</h3>
+                        <p id="problemText" class="problem-text"></p>
                     </div>
 
-                    <!-- ガイダンスカード -->
-                    <div class="guidance-card">
-                        <div class="hint-section">
-                            <h3>💡 ヒント</h3>
-                            <p id="hintText"></p>
-                        </div>
-                        
-                        <div class="explanation-section">
-                            <h3>📖 解説</h3>
-                            <p id="explanationText"></p>
-                        </div>
-                        
-                        <div class="formula-section" id="formulaSection" style="display: none;">
-                            <h3>📐 公式</h3>
-                            <p class="formula" id="formulaText"></p>
-                        </div>
-                        
-                        <div class="next-step-section">
-                            <p id="nextStepText"></p>
-                        </div>
-                    </div>
-
-                    <!-- ナビゲーションボタン -->
-                    <div class="navigation-buttons">
-                        <button class="btn-secondary" id="prevStepBtn" disabled>
-                            ← 前のステップ
+                    <!-- 解答入力エリア -->
+                    <div class="answer-input-section">
+                        <h3>🖊️ 解答を入力してください</h3>
+                        <textarea 
+                            id="learnerWorkInput" 
+                            class="learner-work-textarea"
+                            placeholder="ここに解答の途中経過を入力してください...&#10;&#10;例:&#10;x² - 5x + 6 = 0&#10;因数分解を使って解こうと思います。&#10;(x - 2)(x - 3) = 0&#10;ここまで分かりましたが、次はどうすればいいでしょうか？"
+                            rows="10"
+                        ></textarea>
+                        <button class="btn-primary" id="getGuidanceBtn">
+                            💡 AIにヒントをもらう
                         </button>
-                        <button class="btn-primary" id="nextStepBtn">
-                            次のステップ →
+                    </div>
+
+                    <!-- AIからのガイダンス -->
+                    <div class="ai-guidance-section" id="aiGuidanceSection" style="display: none;">
+                        <h3>🤖 AIからのガイダンス</h3>
+                        
+                        <div class="guidance-card">
+                            <div class="learner-intent-section">
+                                <h4>� あなたの考え</h4>
+                                <p id="learnerIntentText" class="guidance-text"></p>
+                            </div>
+                            
+                            <div class="evaluation-section">
+                                <h4>✅ 評価</h4>
+                                <p id="evaluationText" class="guidance-text"></p>
+                            </div>
+                            
+                            <div class="hint-section">
+                                <h4>� 次のヒント</h4>
+                                <p id="nextHintText" class="guidance-text"></p>
+                            </div>
+                            
+                            <div class="encouragement-section">
+                                <h4>🎉 応援メッセージ</h4>
+                                <p id="encouragementText" class="guidance-text"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作ボタン -->
+                    <div class="action-buttons">
+                        <button class="btn-secondary" id="clearWorkBtn">
+                            🗑️ 解答をクリア
+                        </button>
+                        <button class="btn-secondary" id="resetProblemBtn">
+                            🔄 別の問題を解く
                         </button>
                     </div>
                 </div>

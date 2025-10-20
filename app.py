@@ -53,44 +53,13 @@ def save_problems(problems):
     with open(PROBLEMS_FILE, 'w', encoding='utf-8') as f:
         json.dump(problems, f, ensure_ascii=False, indent=2)
 
-# 初期問題データ
+# 初期問題データ（問題文のみ）
 PROBLEMS = load_problems()
 if not PROBLEMS:
     PROBLEMS = {
-        "star_pentagon": {
-            "id": "star_pentagon",
-            "title": "星型五角形の内角の和",
-            "description": "星型五角形の5つの頂点における内角の和を求める問題",
-            "level": "high-school",
-            "category": "図形",
-            "keywords": ["五角形", "内角", "図形"],
-            "theorems": ["三角形の内角の和", "多角形の外角の和"],
-            "steps": [
-                {
-                    "step": 1,
-                    "hint": "星型五角形を三角形に分解してみましょう",
-                    "explanation": "星型五角形の内角の和を求めるには、まず図形を三角形に分解します。外側の5つの頂点と、内側で交わる5つの点に着目します。",
-                    "formula": "内角の和 = 5つの三角形の内角の和 - 中心の五角形の外角の和"
-                },
-                {
-                    "step": 2,
-                    "hint": "三角形の内角の和は180°です",
-                    "explanation": "星型五角形は5つの三角形に分解できます。各三角形の内角の和は180°なので、5つで180° × 5 = 900°となります。",
-                    "formula": "5 × 180° = 900°"
-                },
-                {
-                    "step": 3,
-                    "hint": "中心の五角形の外角の和を考えます",
-                    "explanation": "中心にできる五角形の外角の和は、どんな多角形でも360°です。これを900°から引きます。",
-                    "formula": "900° - 360° = 540°"
-                },
-                {
-                    "step": 4,
-                    "hint": "最終的な答えを確認しましょう",
-                    "explanation": "星型五角形の5つの頂点における内角の和は180°です。これは5 × 36° = 180°と覚えることもできます。",
-                    "formula": "答え: 180°"
-                }
-            ],
+        "1": {
+            "id": "1",
+            "problem_text": "星型五角形の5つの頂点における内角の和を求めよ。",
             "created_at": datetime.now().isoformat()
         }
     }
@@ -187,42 +156,39 @@ def analyze_image():
         }), 500
 
 
-@app.route('/api/analysis/guidance', methods=['POST'])
-def get_guidance():
-    """解答ガイダンスを取得"""
+@app.route('/api/ocr/extract', methods=['POST'])
+def extract_text_from_image():
+    """画像からOCRでテキストを抽出"""
     try:
         data = request.get_json()
-        problem_id = data.get('problemId')
-        current_step = data.get('currentStep', 0)
         
-        problem = PROBLEMS.get(problem_id)
-        if not problem:
+        if not data or 'image' not in data:
             return jsonify({
                 'success': False,
-                'error': 'Problem not found'
-            }), 404
-        
-        if current_step >= len(problem['steps']):
-            return jsonify({
-                'success': False,
-                'error': 'Step out of range'
+                'error': '画像データがありません'
             }), 400
         
-        step_data = problem['steps'][current_step]
+        # Base64画像データをデコード
+        image_data = data['image']
+        if ',' in image_data:
+            image_data = image_data.split(',')[1]
         
-        result = {
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        # 実際のOCR実装（Tesseractなど）に置き換え可能
+        # ここではシミュレーション
+        extracted_text = """次の方程式を解け。
+x² - 5x + 6 = 0
+
+※実際のOCRを使用する場合は、pytesseractなどをインストールしてください"""
+        
+        return jsonify({
             'success': True,
             'data': {
-                'currentStep': current_step + 1,
-                'totalSteps': len(problem['steps']),
-                'hint': step_data['hint'],
-                'explanation': step_data['explanation'],
-                'formula': step_data.get('formula', ''),
-                'nextStepPreparation': '次のステップに進む準備ができました' if current_step < len(problem['steps']) - 1 else '問題を解き終えました！'
+                'text': extracted_text
             }
-        }
-        
-        return jsonify(result)
+        })
     
     except Exception as e:
         return jsonify({
@@ -231,162 +197,31 @@ def get_guidance():
         }), 500
 
 
-@app.route('/api/admin/generate-solution', methods=['POST'])
-def generate_solution_with_ai():
-    """AIで解答ステップを生成"""
-    try:
-        data = request.get_json()
-        
-        if not OPENAI_AVAILABLE or not openai.api_key:
-            return jsonify({
-                'success': False,
-                'error': 'OpenAI APIが利用できません'
-            }), 503
-        
-        # AIに問題を解かせるプロンプト
-        prompt = f"""
-あなたは高校数学の優秀な教師です。以下の数学問題について、段階的な解答ステップを生成してください。
-
-## 問題情報
-タイトル: {data['title']}
-問題文: {data['description']}
-難易度: {data['level']}
-カテゴリ: {data.get('category', '未分類')}
-関連定理: {', '.join(data.get('theorems', []))}
-
-## 生成してほしい内容
-
-1. **問題の意図（intent）**: この問題で学生に何を学んでほしいか、何を理解してほしいかを1-2文で説明
-2. **解法アプローチ（approach）**: どのような考え方や手法で解くのが最適かを1-2文で説明
-3. **難易度評価（difficulty_assessment）**: 実際の難易度と、つまずきやすいポイントを1-2文で説明
-4. **解答ステップ（steps）**: 4-6個の段階的なステップ。各ステップには以下を含める：
-   - step: ステップ番号
-   - hint: 学生へのヒント（1文）
-   - explanation: 詳しい解説（2-3文）
-   - formula: 使用する公式や計算式（あれば）
-
-## 重要な指針
-- 学生が自分で考える余地を残すこと
-- 段階的に理解を深められるような構成
-- 数式は適切に表現
-- 日本語で丁寧に説明
-
-JSON形式で以下のように返してください：
-{{
-  "intent": "問題の意図",
-  "approach": "推奨される解法",
-  "difficulty_assessment": "難易度評価",
-  "steps": [
-    {{
-      "step": 1,
-      "hint": "ヒント",
-      "explanation": "解説",
-      "formula": "公式（オプション）"
-    }}
-  ]
-}}
-"""
-        
-        # OpenAI APIを呼び出し
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "あなたは高校数学の優秀な教師で、問題の本質を理解し、学生が段階的に理解できるような解説を作成します。"},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2000
-        )
-        
-        # レスポンスをパース
-        ai_response = response.choices[0].message.content
-        
-        # JSON部分を抽出
-        import re
-        json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
-        if json_match:
-            result_data = json.loads(json_match.group())
-        else:
-            result_data = json.loads(ai_response)
-        
-        return jsonify({
-            'success': True,
-            'data': result_data
-        })
-    
-    except Exception as e:
-        print(f"AI生成エラー: {str(e)}")
-        # フォールバック: シンプルなステップを生成
-        fallback_data = {
-            'intent': '問題の本質を理解し、基本的な解法を習得する',
-            'approach': '基本定理を適用し、段階的に解答を導く',
-            'difficulty_assessment': '標準的な難易度。基本的な知識があれば解ける',
-            'steps': [
-                {
-                    'step': 1,
-                    'hint': '問題文をよく読み、何を求められているか確認しましょう',
-                    'explanation': '問題で与えられている情報を整理し、求めるべき答えを明確にします。',
-                    'formula': ''
-                },
-                {
-                    'step': 2,
-                    'hint': '関連する定理や公式を思い出しましょう',
-                    'explanation': 'この問題に適用できる数学的な定理や公式を考えます。',
-                    'formula': ''
-                },
-                {
-                    'step': 3,
-                    'hint': '具体的な計算を進めましょう',
-                    'explanation': '定理や公式を使って、実際に計算を進めていきます。',
-                    'formula': ''
-                },
-                {
-                    'step': 4,
-                    'hint': '答えを確認しましょう',
-                    'explanation': '得られた答えが問題の条件を満たしているか、検算して確認します。',
-                    'formula': ''
-                }
-            ]
-        }
-        
-        return jsonify({
-            'success': True,
-            'data': fallback_data,
-            'note': 'AI APIエラーのためフォールバックレスポンスを返しました'
-        })
-
-
 @app.route('/api/admin/problems', methods=['POST'])
 def register_problem():
-    """新しい問題を登録"""
+    """新しい問題を登録（問題文のみ）"""
     try:
         data = request.get_json()
         
-        # 問題IDを生成（タイトルから）
-        import re
-        problem_id = re.sub(r'[^a-z0-9]+', '_', data['title'].lower())
-        problem_id = problem_id.strip('_')
+        if not data.get('problem_text'):
+            return jsonify({
+                'success': False,
+                'error': '問題文が入力されていません'
+            }), 400
         
-        # 重複チェック
-        if problem_id in PROBLEMS:
-            problem_id = f"{problem_id}_{len(PROBLEMS)}"
+        # 問題IDを生成（連番）
+        problem_id = str(len(PROBLEMS) + 1)
         
-        # 問題データを構築
+        # 問題データを構築（問題文のみ）
         problem = {
             'id': problem_id,
-            'title': data['title'],
-            'description': data['description'],
-            'level': data['level'],
-            'category': data.get('category', '未分類'),
-            'keywords': data.get('keywords', []),
-            'theorems': data.get('theorems', []),
-            'steps': data.get('steps', []),
+            'problem_text': data['problem_text'],
             'created_at': datetime.now().isoformat()
         }
         
-        # AIメタデータがあれば追加
-        if 'aiMetadata' in data:
-            problem['ai_metadata'] = data['aiMetadata']
+        # 画像データがあれば保存
+        if data.get('image_data'):
+            problem['image_data'] = data['image_data']
         
         # データベースに追加
         PROBLEMS[problem_id] = problem
@@ -402,6 +237,114 @@ def register_problem():
             'success': False,
             'error': str(e)
         }), 500
+
+
+@app.route('/api/analysis/guidance', methods=['POST'])
+def get_guidance():
+    """学習者の解答プロセスから意図を読み取ってガイダンスを生成"""
+    try:
+        data = request.get_json()
+        problem_id = data.get('problemId')
+        learner_work = data.get('learnerWork', '')  # 学習者の途中経過
+        current_step = data.get('currentStep', 0)
+        
+        problem = PROBLEMS.get(problem_id)
+        if not problem:
+            return jsonify({
+                'success': False,
+                'error': 'Problem not found'
+            }), 404
+        
+        # AIで学習者の意図を分析
+        if OPENAI_AVAILABLE and openai.api_key and learner_work:
+            # 学習者の解答プロセスを分析するプロンプト
+            prompt = f"""
+あなたは優秀な数学教師です。
+
+## 問題
+{problem['problem_text']}
+
+## 学習者の解答途中経過
+{learner_work}
+
+## タスク
+学習者の解答プロセスを分析し、以下を提供してください：
+
+1. **学習者の意図**: 学習者が何をしようとしているか、どのアプローチを取ろうとしているか
+2. **評価**: 現在の方向性は正しいか、改善点はあるか
+3. **次のヒント**: 学習者の思考を尊重しながら、次にどう進めばよいか
+
+JSON形式で以下のように返してください：
+{{
+  "learner_intent": "学習者の意図",
+  "evaluation": "評価とフィードバック",
+  "next_hint": "次のステップへのヒント",
+  "encouragement": "励ましの言葉"
+}}
+"""
+            
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "あなたは学習者の思考プロセスを理解し、適切なガイダンスを提供する優秀な数学教師です。"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=800
+                )
+                
+                ai_response = response.choices[0].message.content
+                
+                import re
+                json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+                if json_match:
+                    guidance_data = json.loads(json_match.group())
+                else:
+                    guidance_data = json.loads(ai_response)
+                
+                result = {
+                    'success': True,
+                    'data': {
+                        'currentStep': current_step + 1,
+                        'totalSteps': 4,  # 動的に決定
+                        'learnerIntent': guidance_data.get('learner_intent', ''),
+                        'evaluation': guidance_data.get('evaluation', ''),
+                        'hint': guidance_data.get('next_hint', ''),
+                        'encouragement': guidance_data.get('encouragement', 'がんばってください！'),
+                        'nextStepPreparation': '次のステップに進む準備ができました'
+                    }
+                }
+                
+                return jsonify(result)
+                
+            except Exception as e:
+                print(f"AI分析エラー: {str(e)}")
+                # フォールバック
+        
+        # フォールバック: シンプルなガイダンス
+        result = {
+            'success': True,
+            'data': {
+                'currentStep': current_step + 1,
+                'totalSteps': 4,
+                'hint': '問題をよく読み、何が求められているか確認しましょう',
+                'explanation': '問題文から必要な情報を整理し、適切な解法を考えます。',
+                'nextStepPreparation': '次のステップに進む準備ができました'
+            }
+        }
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+# 以下のエンドポイントは削除（不要になった）
+# /api/admin/generate-solution は使わない
 
 
 if __name__ == '__main__':

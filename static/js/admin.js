@@ -1,17 +1,23 @@
 // 管理画面のJavaScript
 
-let currentAIResponse = null;
+let problemImageData = null;
 
 // DOM要素
 const elements = {
     problemForm: document.getElementById('problemForm'),
-    previewSection: document.getElementById('previewSection'),
-    aiThinking: document.getElementById('aiThinking'),
-    thinkingDetails: document.getElementById('thinkingDetails'),
-    previewContent: document.getElementById('previewContent'),
+    textInput: document.getElementById('textInput'),
+    imageInput: document.getElementById('imageInput'),
+    problemText: document.getElementById('problemText'),
+    problemUploadArea: document.getElementById('problemUploadArea'),
+    problemUploadPlaceholder: document.getElementById('problemUploadPlaceholder'),
+    problemPreviewContainer: document.getElementById('problemPreviewContainer'),
+    problemPreviewImage: document.getElementById('problemPreviewImage'),
+    problemImageInput: document.getElementById('problemImageInput'),
+    removeProblemImageBtn: document.getElementById('removeProblemImageBtn'),
+    ocrBtn: document.getElementById('ocrBtn'),
+    ocrResultGroup: document.getElementById('ocrResultGroup'),
+    ocrResultText: document.getElementById('ocrResultText'),
     submitBtn: document.getElementById('submitBtn'),
-    confirmBtn: document.getElementById('confirmBtn'),
-    editBtn: document.getElementById('editBtn'),
     problemsList: document.getElementById('problemsList'),
     loadingOverlay: document.getElementById('loadingOverlay'),
     errorAlert: document.getElementById('errorAlert'),
@@ -22,147 +28,147 @@ const elements = {
     closeSuccessBtn: document.getElementById('closeSuccessBtn')
 };
 
-// フォーム送信
-elements.problemForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = {
-        title: document.getElementById('problemTitle').value,
-        description: document.getElementById('problemDescription').value,
-        level: document.getElementById('problemLevel').value,
-        category: document.getElementById('problemCategory').value || '未分類',
-        keywords: document.getElementById('problemKeywords').value.split(',').map(k => k.trim()).filter(k => k),
-        theorems: document.getElementById('problemTheorems').value.split(',').map(t => t.trim()).filter(t => t),
-        useAI: document.getElementById('useAI').checked
-    };
-    
-    if (formData.useAI) {
-        await generateWithAI(formData);
-    } else {
-        // AI使わない場合は直接登録
-        await registerProblem(formData);
-    }
+// タブ切り替え
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        
+        // タブボタンの切り替え
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // パネルの切り替え
+        elements.textInput.classList.remove('active');
+        elements.imageInput.classList.remove('active');
+        
+        if (tab === 'text') {
+            elements.textInput.classList.add('active');
+        } else {
+            elements.imageInput.classList.add('active');
+        }
+    });
 });
 
-// AIで生成
-async function generateWithAI(formData) {
-    elements.previewSection.style.display = 'block';
-    elements.aiThinking.style.display = 'block';
-    elements.previewContent.style.display = 'none';
+// 画像アップロード処理
+elements.problemUploadPlaceholder.addEventListener('click', () => {
+    elements.problemImageInput.click();
+});
+
+elements.problemImageInput.addEventListener('change', handleFileSelect);
+
+elements.problemUploadArea.addEventListener('dragover', handleDragOver);
+elements.problemUploadArea.addEventListener('dragleave', handleDragLeave);
+elements.problemUploadArea.addEventListener('drop', handleDrop);
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        loadImage(file);
+    }
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    elements.problemUploadArea.classList.add('dragover');
+}
+
+function handleDragLeave(event) {
+    event.preventDefault();
+    elements.problemUploadArea.classList.remove('dragover');
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    elements.problemUploadArea.classList.remove('dragover');
     
-    // スクロール
-    elements.previewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        loadImage(file);
+    }
+}
+
+function loadImage(file) {
+    const reader = new FileReader();
     
-    // 思考プロセスをアニメーション
-    const thinkingSteps = [
-        '🧠 問題の意図を分析しています...',
-        '📊 最適な解法を検討しています...',
-        '🔍 必要な定理を特定しています...',
-        '📝 解答ステップを生成しています...',
-        '✨ 解説文を作成しています...'
-    ];
+    reader.onload = (e) => {
+        problemImageData = e.target.result;
+        elements.problemPreviewImage.src = problemImageData;
+        elements.problemUploadPlaceholder.style.display = 'none';
+        elements.problemPreviewContainer.style.display = 'block';
+        elements.ocrBtn.disabled = false;
+    };
     
-    let stepIndex = 0;
-    const thinkingInterval = setInterval(() => {
-        if (stepIndex < thinkingSteps.length) {
-            elements.thinkingDetails.innerHTML = `<p>${thinkingSteps[stepIndex]}</p>`;
-            stepIndex++;
-        }
-    }, 1500);
+    reader.readAsDataURL(file);
+}
+
+elements.removeProblemImageBtn.addEventListener('click', () => {
+    problemImageData = null;
+    elements.problemPreviewImage.src = '';
+    elements.problemPreviewContainer.style.display = 'none';
+    elements.problemUploadPlaceholder.style.display = 'block';
+    elements.ocrBtn.disabled = true;
+    elements.problemImageInput.value = '';
+    elements.ocrResultGroup.style.display = 'none';
+    elements.ocrResultText.value = '';
+});
+
+// OCR処理
+elements.ocrBtn.addEventListener('click', async () => {
+    if (!problemImageData) return;
+    
+    showLoading();
     
     try {
-        const response = await fetch('/api/admin/generate-solution', {
+        const response = await fetch('/api/ocr/extract', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify({
+                image: problemImageData
+            })
         });
         
         const result = await response.json();
         
-        clearInterval(thinkingInterval);
-        
         if (result.success) {
-            currentAIResponse = result.data;
-            displayAIResponse(result.data, formData);
+            elements.ocrResultText.value = result.data.text;
+            elements.ocrResultGroup.style.display = 'block';
+            showSuccess('テキストを抽出しました');
         } else {
-            showError(result.error || 'AI生成に失敗しました');
+            showError(result.error || 'OCR抽出に失敗しました');
         }
     } catch (error) {
-        clearInterval(thinkingInterval);
         showError('サーバーとの通信に失敗しました');
         console.error(error);
+    } finally {
+        hideLoading();
     }
-}
+});
 
-// AI生成結果を表示
-function displayAIResponse(data, formData) {
-    elements.aiThinking.style.display = 'none';
-    elements.previewContent.style.display = 'block';
+// フォーム送信
+elements.problemForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
     
-    // 基本情報
-    document.getElementById('previewTitle').textContent = formData.title;
-    document.getElementById('previewLevel').textContent = getLevelText(formData.level);
-    document.getElementById('previewDescription').textContent = formData.description;
+    // 問題文を取得（テキスト入力 or OCR結果）
+    let problemText;
+    if (elements.textInput.classList.contains('active')) {
+        problemText = elements.problemText.value.trim();
+    } else {
+        problemText = elements.ocrResultText.value.trim();
+    }
     
-    // AI分析
-    document.getElementById('aiIntent').textContent = data.intent || '問題の本質を理解し、段階的に解答を導く';
-    document.getElementById('aiApproach').textContent = data.approach || '基本的な定理から応用へと展開';
-    document.getElementById('aiDifficulty').textContent = data.difficulty_assessment || '標準的な難易度';
-    
-    // ステップ表示
-    const stepsList = document.getElementById('stepsList');
-    stepsList.innerHTML = '';
-    
-    data.steps.forEach((step, index) => {
-        const stepCard = document.createElement('div');
-        stepCard.className = 'step-card';
-        stepCard.style.animationDelay = `${index * 0.1}s`;
-        
-        stepCard.innerHTML = `
-            <div class="step-header">
-                <div class="step-number">${step.step}</div>
-                <div class="step-content">
-                    <h5>💡 ${step.hint}</h5>
-                </div>
-            </div>
-            <div class="step-content">
-                <p><strong>解説:</strong> ${step.explanation}</p>
-                ${step.formula ? `<div class="step-formula">${step.formula}</div>` : ''}
-            </div>
-        `;
-        
-        stepsList.appendChild(stepCard);
-    });
-}
-
-// 確定して登録
-elements.confirmBtn.addEventListener('click', async () => {
-    if (!currentAIResponse) return;
+    if (!problemText) {
+        showError('問題文を入力してください');
+        return;
+    }
     
     const formData = {
-        title: document.getElementById('problemTitle').value,
-        description: document.getElementById('problemDescription').value,
-        level: document.getElementById('problemLevel').value,
-        category: document.getElementById('problemCategory').value || '未分類',
-        keywords: document.getElementById('problemKeywords').value.split(',').map(k => k.trim()).filter(k => k),
-        theorems: document.getElementById('problemTheorems').value.split(',').map(t => t.trim()).filter(t => t),
-        steps: currentAIResponse.steps,
-        aiMetadata: {
-            intent: currentAIResponse.intent,
-            approach: currentAIResponse.approach,
-            difficulty_assessment: currentAIResponse.difficulty_assessment
-        }
+        problem_text: problemText,
+        image_data: problemImageData  // 画像も保存（オプション）
     };
     
     await registerProblem(formData);
-});
-
-// 編集ボタン
-elements.editBtn.addEventListener('click', () => {
-    elements.previewSection.style.display = 'none';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 // 問題を登録
@@ -183,8 +189,8 @@ async function registerProblem(data) {
         if (result.success) {
             showSuccess('問題を登録しました！');
             elements.problemForm.reset();
-            elements.previewSection.style.display = 'none';
-            currentAIResponse = null;
+            elements.ocrResultGroup.style.display = 'none';
+            problemImageData = null;
             loadProblems();
         } else {
             showError(result.error || '登録に失敗しました');
@@ -216,7 +222,7 @@ function displayProblems(problems) {
     elements.problemsList.innerHTML = '';
     
     if (problems.length === 0) {
-        elements.problemsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">まだ問題が登録されていません</p>';
+        elements.problemsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">まだ問題が登録されていません</p>';
         return;
     }
     
@@ -224,13 +230,13 @@ function displayProblems(problems) {
         const card = document.createElement('div');
         card.className = 'problem-card';
         
+        const problemPreview = problem.problem_text.substring(0, 100);
+        
         card.innerHTML = `
-            <h3>${problem.title}</h3>
-            <p>${problem.description.substring(0, 100)}${problem.description.length > 100 ? '...' : ''}</p>
+            <h3>問題 ${problem.id}</h3>
+            <p>${problemPreview}${problem.problem_text.length > 100 ? '...' : ''}</p>
             <div class="problem-meta">
-                <span class="problem-badge">${getLevelText(problem.level)}</span>
-                ${problem.category ? `<span class="problem-badge">${problem.category}</span>` : ''}
-                <span class="problem-steps-count">${problem.steps ? problem.steps.length : 0} ステップ</span>
+                <span class="problem-badge">登録日: ${new Date(problem.created_at).toLocaleDateString('ja-JP')}</span>
             </div>
         `;
         
@@ -243,15 +249,6 @@ function displayProblems(problems) {
 }
 
 // ユーティリティ関数
-function getLevelText(level) {
-    const levels = {
-        'middle-school': '中学レベル',
-        'high-school': '高校レベル',
-        'university': '大学レベル'
-    };
-    return levels[level] || level;
-}
-
 function showLoading() {
     elements.loadingOverlay.style.display = 'flex';
 }

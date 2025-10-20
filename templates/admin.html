@@ -11,7 +11,7 @@
     <div class="container">
         <header class="header">
             <h1 class="logo">📐 Solvy - 問題登録</h1>
-            <p class="tagline">AIが自動で解答ステップを生成します</p>
+            <p class="tagline">問題文を登録するだけでOK</p>
             <a href="/" class="back-link">← ホームに戻る</a>
         </header>
 
@@ -21,112 +21,69 @@
                 
                 <form id="problemForm">
                     <div class="form-group">
-                        <label for="problemTitle">問題タイトル <span class="required">*</span></label>
-                        <input type="text" id="problemTitle" required placeholder="例: 星型五角形の内角の和">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="problemDescription">問題文 <span class="required">*</span></label>
-                        <textarea id="problemDescription" rows="4" required placeholder="詳細な問題文を入力してください"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="problemLevel">難易度 <span class="required">*</span></label>
-                        <select id="problemLevel" required>
-                            <option value="">選択してください</option>
-                            <option value="middle-school">中学レベル</option>
-                            <option value="high-school">高校レベル</option>
-                            <option value="university">大学レベル</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="problemCategory">カテゴリ</label>
-                        <input type="text" id="problemCategory" placeholder="例: 図形、代数、確率">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="problemKeywords">キーワード（カンマ区切り）</label>
-                        <input type="text" id="problemKeywords" placeholder="例: 五角形, 内角, 図形">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="problemTheorems">使用する定理（カンマ区切り）</label>
-                        <input type="text" id="problemTheorems" placeholder="例: 三角形の内角の和, 多角形の外角の和">
-                    </div>
-
-                    <div class="ai-section">
-                        <h3>🤖 AI解答生成オプション</h3>
-                        <div class="form-group checkbox-group">
-                            <label>
-                                <input type="checkbox" id="useAI" checked>
-                                AIに解答ステップを自動生成させる
-                            </label>
+                        <label>問題文の入力方法を選択</label>
+                        <div class="input-method-tabs">
+                            <button type="button" class="tab-btn active" data-tab="text">✍️ テキスト入力</button>
+                            <button type="button" class="tab-btn" data-tab="image">📸 画像アップロード</button>
                         </div>
-                        <p class="help-text">
-                            チェックを入れると、OpenAI GPT-4が問題を解析し、
-                            段階的な解答ステップ、ヒント、解説を自動生成します。
-                        </p>
+                    </div>
+
+                    <!-- テキスト入力 -->
+                    <div id="textInput" class="input-panel active">
+                        <div class="form-group">
+                            <label for="problemText">問題文 <span class="required">*</span></label>
+                            <textarea id="problemText" rows="8" placeholder="問題文をそのまま入力してください。
+
+例:
+次の方程式を解け。
+x² - 5x + 6 = 0"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- 画像入力 -->
+                    <div id="imageInput" class="input-panel" style="display: none;">
+                        <div class="form-group">
+                            <label>問題画像をアップロード</label>
+                            <div class="upload-area" id="problemUploadArea">
+                                <div class="upload-placeholder" id="problemUploadPlaceholder">
+                                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                    <p>問題の画像をドラッグ&ドロップ<br>または<br>クリックして選択</p>
+                                    <input type="file" id="problemImageInput" accept="image/*" hidden>
+                                </div>
+                                <div class="preview-container" id="problemPreviewContainer" style="display: none;">
+                                    <img id="problemPreviewImage" alt="プレビュー">
+                                    <button type="button" class="btn-secondary" id="removeProblemImageBtn">画像を削除</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-primary" id="ocrBtn" disabled>
+                                🔍 OCRでテキスト抽出
+                            </button>
+                        </div>
+
+                        <div class="form-group" id="ocrResultGroup" style="display: none;">
+                            <label>抽出されたテキスト（編集可能）</label>
+                            <textarea id="ocrResultText" rows="8"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>💡 ポイント</h4>
+                        <ul>
+                            <li>問題文だけを登録すればOK</li>
+                            <li>難易度やカテゴリは不要</li>
+                            <li>AIが学習者の解答プロセスから意図を読み取ります</li>
+                            <li>解き方のステップは自動生成されません</li>
+                        </ul>
                     </div>
 
                     <button type="submit" class="btn-primary" id="submitBtn">
-                        🚀 問題を登録してAIに解かせる
+                        ✅ 問題を登録
                     </button>
                 </form>
-            </section>
-
-            <section class="preview-section" id="previewSection" style="display: none;">
-                <h2>👁️ AI生成結果プレビュー</h2>
-                
-                <div class="ai-thinking" id="aiThinking">
-                    <div class="thinking-animation">
-                        <div class="thinking-dot"></div>
-                        <div class="thinking-dot"></div>
-                        <div class="thinking-dot"></div>
-                    </div>
-                    <p>AIが問題を解析中...</p>
-                    <div class="thinking-details" id="thinkingDetails">
-                        <p>🧠 問題の意図を分析しています</p>
-                    </div>
-                </div>
-
-                <div class="preview-content" id="previewContent" style="display: none;">
-                    <div class="preview-header">
-                        <h3 id="previewTitle"></h3>
-                        <span class="preview-level" id="previewLevel"></span>
-                    </div>
-                    
-                    <div class="preview-description">
-                        <strong>問題文:</strong>
-                        <p id="previewDescription"></p>
-                    </div>
-
-                    <div class="ai-analysis">
-                        <h4>🤖 AIの分析</h4>
-                        <div class="analysis-item">
-                            <strong>解答の意図:</strong>
-                            <p id="aiIntent"></p>
-                        </div>
-                        <div class="analysis-item">
-                            <strong>推奨される解法:</strong>
-                            <p id="aiApproach"></p>
-                        </div>
-                        <div class="analysis-item">
-                            <strong>難易度評価:</strong>
-                            <p id="aiDifficulty"></p>
-                        </div>
-                    </div>
-
-                    <div class="preview-steps">
-                        <h4>📚 生成された解答ステップ</h4>
-                        <div id="stepsList"></div>
-                    </div>
-
-                    <div class="preview-actions">
-                        <button class="btn-primary" id="confirmBtn">✅ この内容で登録する</button>
-                        <button class="btn-secondary" id="editBtn">✏️ 編集する</button>
-                    </div>
-                </div>
             </section>
 
             <section class="problems-list-section">
