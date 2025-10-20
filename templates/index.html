@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solvy - 高校数学学習支援</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- ヘッダー -->
+        <header class="header">
+            <h1 class="logo">📐 Solvy</h1>
+            <p class="tagline">高校数学の学習をサポート</p>
+            <a href="/admin" class="admin-link">⚙️ 問題を登録</a>
+        </header>
+
+        <!-- メインコンテンツ -->
+        <main class="main-content">
+            <!-- 左側: 画像アップロードエリア -->
+            <section class="upload-section">
+                <h2>📸 問題画像をアップロード</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-placeholder" id="uploadPlaceholder">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>画像をドラッグ&ドロップ<br>または<br>クリックして選択</p>
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+                    </div>
+                    <div class="preview-container" id="previewContainer" style="display: none;">
+                        <img id="previewImage" alt="プレビュー">
+                        <button class="btn-secondary" id="removeImageBtn">画像を削除</button>
+                    </div>
+                </div>
+                <button class="btn-primary" id="analyzeBtn" disabled>
+                    🔍 画像を解析
+                </button>
+                
+                <!-- 解析結果 -->
+                <div class="analysis-result" id="analysisResult" style="display: none;">
+                    <h3>📊 解析結果</h3>
+                    <div class="result-item">
+                        <strong>認識されたテキスト:</strong>
+                        <p id="recognizedText"></p>
+                    </div>
+                    <div class="result-item">
+                        <strong>数式:</strong>
+                        <p id="recognizedFormulas"></p>
+                    </div>
+                    <div class="result-item">
+                        <strong>信頼度:</strong>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill"></div>
+                        </div>
+                        <span id="confidenceText"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 右側: ガイダンスエリア -->
+            <section class="guidance-section">
+                <h2>🎓 解答ガイダンス</h2>
+                <div class="guidance-placeholder" id="guidancePlaceholder">
+                    <p>まず問題画像をアップロードして解析してください</p>
+                </div>
+                
+                <div class="guidance-content" id="guidanceContent" style="display: none;">
+                    <!-- 進捗バー -->
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <p class="progress-text">
+                            ステップ <span id="currentStep">1</span> / <span id="totalSteps">4</span>
+                        </p>
+                    </div>
+
+                    <!-- ガイダンスカード -->
+                    <div class="guidance-card">
+                        <div class="hint-section">
+                            <h3>💡 ヒント</h3>
+                            <p id="hintText"></p>
+                        </div>
+                        
+                        <div class="explanation-section">
+                            <h3>📖 解説</h3>
+                            <p id="explanationText"></p>
+                        </div>
+                        
+                        <div class="formula-section" id="formulaSection" style="display: none;">
+                            <h3>📐 公式</h3>
+                            <p class="formula" id="formulaText"></p>
+                        </div>
+                        
+                        <div class="next-step-section">
+                            <p id="nextStepText"></p>
+                        </div>
+                    </div>
+
+                    <!-- ナビゲーションボタン -->
+                    <div class="navigation-buttons">
+                        <button class="btn-secondary" id="prevStepBtn" disabled>
+                            ← 前のステップ
+                        </button>
+                        <button class="btn-primary" id="nextStepBtn">
+                            次のステップ →
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ローディング -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>処理中...</p>
+        </div>
+
+        <!-- エラーメッセージ -->
+        <div class="error-alert" id="errorAlert" style="display: none;">
+            <span id="errorMessage"></span>
+            <button class="close-btn" id="closeErrorBtn">×</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,17 +1,40 @@
-node_modules/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
 dist/
 build/
+
+# Flask
+instance/
+.webassets-cache
+
+# 環境変数
 .env
-.env.local
-.env.*.local
-*.log
-.DS_Store
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
+
+# アップロードファイル
+uploads/*.jpg
+uploads/*.png
+uploads/*.gif
+uploads/*.jpeg
+!uploads/.gitkeep
+
+# IDE
+.vscode/
 .idea/
 *.swp
 *.swo
 *~
-.turbo/
-coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ログ
+*.log
